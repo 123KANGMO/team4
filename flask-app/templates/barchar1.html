@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<body>
+<div id="myChart" style="width:100%; max-width:600px; height:500px;"></div>
+
+<script type="text/javascript">
+  google.charts.load("current", {packages:["corechart"]});
+  google.charts.setOnLoadCallback(drawChart);
+  function drawChart() {
+      var data = google.visualization.arrayToDataTable([
+        ['단어', '언급횟수', { role: 'style' } ],
+        ['유부장님', 87, 'stroke-color: #703593; stroke-width: 4; fill-color: #C5A5CF'],
+        ['정과장', 72, 'stroke-color: #871B47; stroke-opacity: 0.6; stroke-width: 8; fill-color: #BC5679; fill-opacity: 0.2'],
+        ["너무", 56, "gold"],
+        ["마지막", 51, "silver"],
+        ['무도', 39, 'color: gray'],
+        ['진짜', 38, 'color: #76A7FA'],
+        ['새로운', 35, 'opacity: 0.2'],
+        ["ㅋㅋㅋ", 33, "#b87333"]
+      ]);
+
+
+    var view = new google.visualization.DataView(data);
+    view.setColumns([0, 1,
+                     { calc: "stringify",
+                       sourceColumn: 1,
+                       type: "string",
+                       role: "annotation" },
+                     2]);
+
+    var options = {
+      title: "Density of Precious Metals, in g/cm^3",
+      width: 600,
+      height: 400,
+      bar: {groupWidth: "95%"},
+      legend: { position: "none" },
+    };
+    var chart = new google.visualization.BarChart(document.getElementById("barchart_values"));
+    chart.draw(view, options);
+}
+</script>
+
+</body>
+</html>

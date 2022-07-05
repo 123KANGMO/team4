@@ -6,6 +6,8 @@ from jinja2 import Template
 #db
 
 app = Flask(__name__)
+app.config['JSON_AS_ASCII'] = False #서버로 부터 받은 데이터의 한글 사용 가능
+
 api = Api(app)
 parser = reqparse.RequestParser()
 # parser.add_argument('username',type=str, help='@@cannot be converted')
@@ -93,22 +95,30 @@ def saveComment(data):
 
 # flask api 
 class CC (Resource):
-  def get(self, videoname):
+  def get(self, videoname): # 제목을 파라미터? 로 받으면 안되네요 제목 속에 "?" 를 처리 하지 못함.
     query_set = Comment.objects(name=videoname)
     json_data = query_set.to_json()
     dicts = json.loads(json_data) 
-    #print(dicts)
+    print(videoname)
+    print(dicts)
     # 동영상 별로 볼때, 그 동영상의 주요 키워드를 주자.
-    words_set = Keywords.objects(video_name=videoname)
-    json_words = words_set.to_json()
-    words = json.loads(json_words) 
     e_counter = {}
     for x in dicts:
       if x['emo'] in e_counter:
         e_counter[x['emo']]+=1
       else:
         e_counter[x['emo']]=1
-    return f"cc.get ,{e_counter} \n words{words}"
+
+    data = {'Task' : f' 해당 영상 댓글의 감정분포',
+      '불안' : e_counter['불안'] if '불안'in e_counter.keys() else 7,
+      '분노' : e_counter['분노'] if '분노'in e_counter.keys() else 7,
+      '슬픔' : e_counter['슬픔'] if '슬픔'in e_counter.keys() else 7,
+      '기쁨' : e_counter['기쁨'] if '기쁨'in e_counter.keys() else 7,
+      '당황' : e_counter['당황'] if '당황'in e_counter.keys() else 7,
+      '상처' : e_counter['상처'] if '상처'in e_counter.keys() else 7
+    }
+    
+    return make_response(render_template('piec.html', data=data))
 
   def post(self,videoname):
     content = request.json
@@ -124,7 +134,8 @@ class CC (Resource):
 
 class list_name (Resource):
   def get(self,listname):
-    query_set = Comment.objects(list_name=listname)
+    vn = request.args.get('videoname')
+    query_set = Comment.objects(list_name=vn)
     json_data = query_set.to_json()
     dicts = json.loads(json_data) 
     e_counter = {}
@@ -161,7 +172,49 @@ class Username (Resource):
       else:
         e_counter[x['emo']]=1
     # return f"keywordsaved?: {e_counter}"
-    data = {'Task' : f'{list}안에서 사용자 {user}의 감정분포',
+    data = {'Task' : f'재생목록 {list} 안에서 사용자 {user}의 감정분포',
+      '불안' : e_counter['불안'] if '불안'in e_counter.keys() else 7,
+      '분노' : e_counter['분노'] if '분노'in e_counter.keys() else 7,
+      '슬픔' : e_counter['슬픔'] if '슬픔'in e_counter.keys() else 7,
+      '기쁨' : e_counter['기쁨'] if '기쁨'in e_counter.keys() else 7,
+      '당황' : e_counter['당황'] if '당황'in e_counter.keys() else 7,
+      '상처' : e_counter['상처'] if '상처'in e_counter.keys() else 7
+    }
+    
+    #return render_template('piec.html', data=data)
+    #return render_template("piec2.html", row_data=values)
+    #return render_template('test.html')
+    return make_response(render_template('piec.html', data=data))
+
+
+class word (Resource):
+  def get(self):
+    list = request.args.get('listname')
+    print('userlist')
+    words_set = Keywords.objects(list_name=list)
+    json_words = words_set.to_json()
+    words = json.loads(json_words)
+    
+    # return f"cc.get  words{words}
+    return make_response(render_template('barchar3.html', data='영상별 단어'))
+
+class PieByVideo (Resource):
+  def get(self):
+    videoname = request.args.get('videoname')
+    query_set = Comment.objects(name=videoname)
+    json_data = query_set.to_json()
+    dicts = json.loads(json_data) 
+    print(videoname)
+    print(dicts)
+    # 동영상 별로 볼때, 그 동영상의 주요 키워드를 주자.
+    e_counter = {}
+    for x in dicts:
+      if x['emo'] in e_counter:
+        e_counter[x['emo']]+=1
+      else:
+        e_counter[x['emo']]=1
+
+    data = {'Task' : f' 해당 영상 댓글의 감정분포',
       '불안' : e_counter['불안'] if '불안'in e_counter.keys() else 7,
       '분노' : e_counter['분노'] if '분노'in e_counter.keys() else 7,
       '슬픔' : e_counter['슬픔'] if '슬픔'in e_counter.keys() else 7,
@@ -170,25 +223,47 @@ class Username (Resource):
       '상처' : e_counter['상처'] if '상처'in e_counter.keys() else 7
     }
 
-    values = [
-        ["Task", "Hours per Day"],
-        ["멍멍이", 11],
-        ["사과", 2],
-        ["Commute", 2],
-        ["Watch TV", 2],
-        ["Sleep", 7],
-    ]
-    print(data)
-    
-    #return render_template('piec.html', data=data)
-    # return render_template("piec2.html", row_data=values)
-    # return render_template('test.html')
+    return make_response(render_template('piec.html', data=data))
+
+class PieByList (Resource):
+  def get(self):
+    listname = request.args.get('listname')
+    query_set = Comment.objects(list_name=listname)
+    json_data = query_set.to_json()
+    dicts = json.loads(json_data) 
+    print(listname)
+    print(dicts)
+    # 동영상 별로 볼때, 그 동영상의 주요 키워드를 주자.
+    e_counter = {}
+    for x in dicts:
+      if x['emo'] in e_counter:
+        e_counter[x['emo']]+=1
+      else:
+        e_counter[x['emo']]=1
+
+    data = {'Task' : f' 해당 영상 댓글의 감정분포',
+      '불안' : e_counter['불안'] if '불안'in e_counter.keys() else 7,
+      '분노' : e_counter['분노'] if '분노'in e_counter.keys() else 7,
+      '슬픔' : e_counter['슬픔'] if '슬픔'in e_counter.keys() else 7,
+      '기쁨' : e_counter['기쁨'] if '기쁨'in e_counter.keys() else 7,
+      '당황' : e_counter['당황'] if '당황'in e_counter.keys() else 7,
+      '상처' : e_counter['상처'] if '상처'in e_counter.keys() else 7
+    }
+
     return make_response(render_template('piec.html', data=data))
 
 
-api.add_resource(CC, "/cc/<string:videoname>")
-api.add_resource(list_name, "/bylist/<string:listname>")
-api.add_resource(Username, "/byuserandlist")
+
+
+
+
+api.add_resource(CC, "/cc/<string:videoname>") #비디오 별, 
+api.add_resource(list_name, "/bylist/<string:listname>") # 리스트 별  파이차트
+api.add_resource(Username, "/byuserandlist") # 리스트 + 유저 별 파이차트
+#
+api.add_resource(word, "/word") 
+api.add_resource(PieByVideo, "/piebyvideo") 
+api.add_resource(PieByList, "/piebylist") 
 
 
 
