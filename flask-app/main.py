@@ -189,14 +189,31 @@ class Username (Resource):
 
 class word (Resource):
   def get(self):
-    list = request.args.get('listname')
+    videoname = request.args.get('videoname')
     print('userlist')
-    words_set = Keywords.objects(list_name=list)
+    words_set = Keywords.objects(video_name=videoname)
     json_words = words_set.to_json()
-    words = json.loads(json_words)
-    
-    # return f"cc.get  words{words}
-    return make_response(render_template('barchar3.html', data='영상별 단어'))
+    wordslist = json.loads(json_words)
+    print(len(wordslist))
+    if len(wordslist) == 0:#;;
+      return '해당 제목의 데이터가 없습니다!'
+    words = wordslist[0]
+    print(len(words))
+    print(type(words['counts'][0]))
+    words['words'][0]
+    mylist = [
+      # ['단어', '언급횟수', { role: 'style' } ],
+      [words['words'][0], words['counts'][0], 'stroke-color: #703593; stroke-width: 4; fill-color: #C5A5CF'],
+      [words['words'][1], words['counts'][1], 'stroke-color: #871B47; stroke-opacity: 0.6; stroke-width: 8; fill-color: #BC5679; fill-opacity: 0.2'],
+      [words['words'][2], words['counts'][2], "gold"],
+      [words['words'][3], words['counts'][3], "silver"],
+      [words['words'][4], words['counts'][4], 'color: gray'],
+      [words['words'][5], words['counts'][5], 'color: #76A7FA'],
+      [words['words'][6], words['counts'][6], 'opacity: 0.2'],
+      [words['words'][7], words['counts'][7], "#b87333"],
+    ]
+
+    return make_response(render_template('barchar3.html', mylist=mylist))
 
 class PieByVideo (Resource):
   def get(self):
@@ -229,7 +246,9 @@ class PieByList (Resource):
   def get(self):
     listname = request.args.get('listname')
     query_set = Comment.objects(list_name=listname)
+
     json_data = query_set.to_json()
+    j2=json.dumps(json_data, ensure_ascii=False, encoding='utf8')
     dicts = json.loads(json_data) 
     print(listname)
     print(dicts)
